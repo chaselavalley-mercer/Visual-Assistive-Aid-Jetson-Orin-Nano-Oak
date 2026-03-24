@@ -42,13 +42,18 @@ git clone <your-repo-url>
 cd Visual-Assistive-Aid-Jetson-Orin-Nano-Oak
 ```
 
-### 3. Create and activate venv
-```bash
-python3 -m venv .venv
+### 3. Create and activate venv (windows)
+.\scripts\setup_windows.ps1
+.\.venv\Scripts\Activate.ps1
+
+### 3. Create and activate venv (Mac)
+./scripts/setup_local.sh
 source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-```
+
+### 3. Create and activate venv (Jetson)
+chmod +x scripts/setup_jetson.sh
+./scripts/setup_jetson.sh
+source .venv/bin/activate
 
 ### 4. First test
 ```bash
