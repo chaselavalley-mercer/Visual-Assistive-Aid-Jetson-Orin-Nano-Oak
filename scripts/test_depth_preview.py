@@ -1,56 +1,45 @@
-"""Basic stereo depth preview test for OAK-D Lite.
-
-Run:
-    python scripts/test_depth_preview.py
-Press q to quit.
-"""
-
-from __future__ import annotations
+#!/usr/bin/env python3
 
 import cv2
 import depthai as dai
+import numpy as np
 
 
 def main() -> None:
     pipeline = dai.Pipeline()
-
-    left = pipeline.create(dai.node.Camera)
-    left.setBoardSocket(dai.CameraBoardSocket.CAM_B)
-    left.setSize(640, 400)
-    left.setFps(30)
-
-    right = pipeline.create(dai.node.Camera)
-    right.setBoardSocket(dai.CameraBoardSocket.CAM_C)
-    right.setSize(640, 400)
-    right.setFps(30)
-
+    monoLeft = pipeline.create(dai.node.Camera).build(dai.CameraBoardSocket.CAM_B)
+    monoRight = pipeline.create(dai.node.Camera).build(dai.CameraBoardSocket.CAM_C)
     stereo = pipeline.create(dai.node.StereoDepth)
-    stereo.setDefaultProfilePreset(dai.node.StereoDepth.PresetMode.DEFAULT)
+
+    # Linking
+    monoLeftOut = monoLeft.requestFullResolutionOutput()
+    monoRightOut = monoRight.requestFullResolutionOutput()
+    monoLeftOut.link(stereo.left)
+    monoRightOut.link(stereo.right)
+
+    stereo.setRectification(True)
+    stereo.setExtendedDisparity(True)
     stereo.setLeftRightCheck(True)
-    stereo.setSubpixel(True)
 
-    left.requestOutput((640, 400), dai.ImgFrame.Type.GRAY8).link(stereo.left)
-    right.requestOutput((640, 400), dai.ImgFrame.Type.GRAY8).link(stereo.right)
+    disparityQueue = stereo.disparity.createOutputQueue()
 
-    out = pipeline.create(dai.node.XLinkOut)
-    out.setStreamName("depth")
-    stereo.depth.link(out.input)
+    colorMap = cv2.applyColorMap(np.arange(256, dtype=np.uint8), cv2.COLORMAP_JET)
+    colorMap[0] = [0, 0, 0]  # to make zero-disparity pixels black
 
-    with dai.Device(pipeline) as device:
-        q_depth = device.getOutputQueue(name="depth", maxSize=4, blocking=False)
-
-        while True:
-            packet = q_depth.get()
-            frame = packet.getFrame()
-            depth_vis = cv2.normalize(frame, None, 0, 255, cv2.NORM_MINMAX)
-            depth_vis = depth_vis.astype("uint8")
-            depth_vis = cv2.applyColorMap(depth_vis, cv2.COLORMAP_JET)
-            cv2.imshow("OAK Depth Preview", depth_vis)
-
-            if cv2.waitKey(1) & 0xFF == ord("q"):
+    with pipeline:
+        pipeline.start()
+        maxDisparity = 1
+        while pipeline.isRunning():
+            disparity = disparityQueue.get()
+            assert isinstance(disparity, dai.ImgFrame)
+            npDisparity = disparity.getFrame()
+            maxDisparity = max(maxDisparity, np.max(npDisparity))
+            colorizedDisparity = cv2.applyColorMap(((npDisparity / maxDisparity) * 255).astype(np.uint8), colorMap)
+            cv2.imshow("OAK Depth Preview", colorizedDisparity)
+            key = cv2.waitKey(1)
+            if key == ord('q'):
+                pipeline.stop()
                 break
-
-    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
