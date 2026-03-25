@@ -20,10 +20,11 @@ def main() -> int:
 
     print(f"Found {len(devices)} device(s):")
     for idx, device_info in enumerate(devices, start=1):
-        print(f"  [{idx}] MX ID: {device_info.getMxId()}")
+        mxid = getattr(device_info, "mxid", None) or getattr(device_info, "getMxId", lambda: None)()
+        print(f"  [{idx}] MX ID: {mxid}")
         print(f"      Name: {device_info.name}")
 
-    with dai.Device() as device:
+    with dai.Device(dai.DeviceInfo(), dai.UsbSpeed.HIGH) as device:
         print("\nConnected successfully.")
         print(f"Connected cameras: {device.getConnectedCameraFeatures()}")
         print(f"USB speed: {device.getUsbSpeed()}")
