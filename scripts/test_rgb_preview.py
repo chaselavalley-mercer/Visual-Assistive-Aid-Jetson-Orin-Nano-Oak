@@ -5,7 +5,9 @@ import depthai as dai
 def main():
     with dai.Pipeline() as pipeline:
         cam = pipeline.create(dai.node.Camera).build(dai.CameraBoardSocket.CAM_A)
-        videoQueue = cam.requestOutput((1280, 720), dai.ImgFrame.Type.BGR888p).createOutputQueue()
+        videoQueue = cam.requestOutput(
+            (1920, 1080), dai.ImgFrame.Type.BGR888p
+        ).createOutputQueue()
         pipeline.start()
         while pipeline.isRunning():
             videoIn = videoQueue.get()

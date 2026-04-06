@@ -17,3 +17,6 @@ Thumbs.db
 *.log
 output/
 .cache/
+
+#yolo .pt files
+*.pt

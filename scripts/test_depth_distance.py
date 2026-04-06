@@ -74,7 +74,6 @@ def build_pipeline():
     stereo.setRectification(True)
     stereo.setLeftRightCheck(True)
     stereo.setExtendedDisparity(True)
-    stereo.setMedianFilter(dai.MedianFilter.KERNEL_7x7)  # v3 direct call
 
     depth_queue = stereo.depth.createOutputQueue()
 

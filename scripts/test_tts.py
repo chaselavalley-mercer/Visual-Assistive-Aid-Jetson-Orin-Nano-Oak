@@ -38,7 +38,7 @@ def main():
     for alert in SAMPLE_ALERTS:
         print(f">> {alert}")
         engine.say(alert)
-        engine.runAndWait()
+    engine.runAndWait()
 
     print("\nTTS test complete.")
 

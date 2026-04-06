@@ -1,3 +1,5 @@
 depthai>=3.2.0
 opencv-python
 numpy
+ultralytics
+pyttsx3
